@@ -1,0 +1,39 @@
+name: CI / Deploy to Railway
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run lint/tests (placeholder)
+        run: echo "Add tests/lint steps here"
+
+      - name: Run DB migrations
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          if [ -n "${DATABASE_URL}" ]; then
+            psql "${DATABASE_URL}" -v ON_ERROR_STOP=1 -f sql/schema.sql
+          else
+            echo "No DATABASE_URL set; skipping migrations"
+          fi
+
+      - name: Deploy to Railway
+        if: ${{ secrets.RAILWAY_TOKEN != '' }}
+        uses: railwayapp/railway-action@v3
+        with:
+          apiKey: ${{ secrets.RAILWAY_TOKEN }}
